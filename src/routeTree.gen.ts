@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkRouteImport } from './routes/work'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const WorkRoute = WorkRouteImport.update({
   id: '/work',
   path: '/work',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/work': typeof WorkRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/work': typeof WorkRoute
 }
 export interface FileRoutesById {
@@ -70,14 +78,37 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/work': typeof WorkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hire' | '/login' | '/profile' | '/signup' | '/work'
+  fullPaths:
+    | '/'
+    | '/hire'
+    | '/login'
+    | '/profile'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/work'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hire' | '/login' | '/profile' | '/signup' | '/work'
-  id: '__root__' | '/' | '/hire' | '/login' | '/profile' | '/signup' | '/work'
+  to:
+    | '/'
+    | '/hire'
+    | '/login'
+    | '/profile'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/work'
+  id:
+    | '__root__'
+    | '/'
+    | '/hire'
+    | '/login'
+    | '/profile'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/work'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -86,6 +117,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WorkRoute: typeof WorkRoute
 }
 
@@ -96,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/work'
       fullPath: '/work'
       preLoaderRoute: typeof WorkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -142,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   WorkRoute: WorkRoute,
 }
 export const routeTree = rootRouteImport
