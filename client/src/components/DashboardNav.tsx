@@ -28,6 +28,13 @@ export function DashboardNav() {
         <Logo />
         <nav className="hidden gap-1 md:flex">
           <Link
+            to="/dashboard"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            activeProps={{ className: "rounded-full px-3 py-1.5 text-sm font-medium bg-primary-soft text-primary" }}
+          >
+            Dashboard
+          </Link>
+          <Link
             to="/hire"
             className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
             activeProps={{ className: "rounded-full px-3 py-1.5 text-sm font-medium bg-primary-soft text-primary" }}
@@ -46,9 +53,9 @@ export function DashboardNav() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search for skills..." className="rounded-full pl-9" />
         </div>
-        <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted">
+        <Link to="/messages" className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted">
           <MessageSquare className="h-4 w-4" />
-        </button>
+        </Link>
         <button className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted">
           <Bell className="h-4 w-4" />
         </button>
@@ -70,10 +77,13 @@ export function DashboardNav() {
                 <Link to="/profile">My profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/hire">Hire dashboard</Link>
+                <Link to="/dashboard">Dashboard</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/work">Work dashboard</Link>
+                <Link to="/messages">Messages</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings">Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={onLogout}>Log out</DropdownMenuItem>
