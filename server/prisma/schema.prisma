@@ -1,0 +1,290 @@
+// =========================================================================
+// unigig — Prisma schema
+// PostgreSQL with UUIDs. Designed for production from day one.
+// =========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------------------
+// Enums
+// -------------------------------------------------------------------------
+
+enum UserRole {
+  HIRE
+  WORK
+  BOTH
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum BudgetType {
+  FIXED
+  HOURLY
+  MONTHLY
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// -------------------------------------------------------------------------
+// User
+// -------------------------------------------------------------------------
+
+model User {
+  id             String       @id @default(uuid()) @db.Uuid
+  email          String       @unique
+  // nullable: Google-only users have no local password
+  password       String?
+  authProvider   AuthProvider @default(LOCAL)
+  googleId       String?      @unique
+
+  name           String
+  university     String?
+  major          String?
+  gradYear       Int?
+  headline       String?
+  bio            String?      @db.Text
+  hourlyRate     Int?
+  avatar         String?
+  role           UserRole     @default(BOTH)
+
+  emailVerified  Boolean      @default(false)
+  emailVerificationToken       String?   @unique
+  emailVerificationExpiresAt   DateTime?
+  passwordResetToken           String?   @unique
+  passwordResetExpiresAt       DateTime?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  skills         UserSkill[]
+  portfolio      PortfolioItem[]
+  jobsPosted     Job[]        @relation("ClientJobs")
+  proposals      Proposal[]
+  contractsAsClient     Contract[] @relation("ClientContracts")
+  contractsAsFreelancer Contract[] @relation("FreelancerContracts")
+  reviewsGiven   Review[]     @relation("ReviewsGiven")
+  reviewsReceived Review[]    @relation("ReviewsReceived")
+  messagesSent   Message[]    @relation("MessagesSent")
+  messagesReceived Message[]  @relation("MessagesReceived")
+  refreshTokens  RefreshToken[]
+
+  @@index([role])
+  @@index([university])
+  @@index([emailVerified])
+}
+
+// -------------------------------------------------------------------------
+// Skill (many-to-many with User and Job)
+// -------------------------------------------------------------------------
+
+model Skill {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String      @unique
+  slug      String      @unique
+  createdAt DateTime    @default(now())
+
+  users     UserSkill[]
+  jobs      JobSkill[]
+
+  @@index([slug])
+}
+
+model UserSkill {
+  userId  String @db.Uuid
+  skillId String @db.Uuid
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@index([skillId])
+}
+
+model JobSkill {
+  jobId   String @db.Uuid
+  skillId String @db.Uuid
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, skillId])
+  @@index([skillId])
+}
+
+// -------------------------------------------------------------------------
+// Portfolio (per-user images / links)
+// -------------------------------------------------------------------------
+
+model PortfolioItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  imageUrl  String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// -------------------------------------------------------------------------
+// Job
+// -------------------------------------------------------------------------
+
+model Job {
+  id           String     @id @default(uuid()) @db.Uuid
+  clientId     String     @db.Uuid
+  title        String
+  description  String     @db.Text
+  category     String
+  budgetType   BudgetType
+  budgetAmount Int
+  deadline     DateTime?
+  status       JobStatus  @default(OPEN)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  client       User       @relation("ClientJobs", fields: [clientId], references: [id], onDelete: Cascade)
+  skills       JobSkill[]
+  proposals    Proposal[]
+  contract     Contract?
+
+  @@index([clientId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// -------------------------------------------------------------------------
+// Proposal
+// -------------------------------------------------------------------------
+
+model Proposal {
+  id            String         @id @default(uuid()) @db.Uuid
+  jobId         String         @db.Uuid
+  freelancerId  String         @db.Uuid
+  coverLetter   String         @db.Text
+  bidAmount     Int
+  status        ProposalStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  job           Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  freelancer    User           @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, freelancerId])
+  @@index([jobId])
+  @@index([freelancerId])
+  @@index([status])
+}
+
+// -------------------------------------------------------------------------
+// Contract
+// -------------------------------------------------------------------------
+
+model Contract {
+  id            String         @id @default(uuid()) @db.Uuid
+  jobId         String         @unique @db.Uuid
+  freelancerId  String         @db.Uuid
+  clientId      String         @db.Uuid
+  status        ContractStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  job           Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  freelancer    User           @relation("FreelancerContracts", fields: [freelancerId], references: [id], onDelete: Cascade)
+  client        User           @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
+  reviews       Review[]
+
+  @@index([freelancerId])
+  @@index([clientId])
+  @@index([status])
+}
+
+// -------------------------------------------------------------------------
+// Review
+// -------------------------------------------------------------------------
+
+model Review {
+  id          String   @id @default(uuid()) @db.Uuid
+  contractId  String   @db.Uuid
+  rating      Int
+  comment     String?  @db.Text
+  fromUserId  String   @db.Uuid
+  toUserId    String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  fromUser    User     @relation("ReviewsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser      User     @relation("ReviewsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, fromUserId])
+  @@index([toUserId])
+  @@index([fromUserId])
+  @@index([contractId])
+}
+
+// -------------------------------------------------------------------------
+// Message (for future chat)
+// -------------------------------------------------------------------------
+
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  fromUserId String   @db.Uuid
+  toUserId   String   @db.Uuid
+  content    String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  fromUser   User     @relation("MessagesSent", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User     @relation("MessagesReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([fromUserId, toUserId, createdAt])
+  @@index([toUserId, read])
+}
+
+// -------------------------------------------------------------------------
+// RefreshToken (rotated on each refresh; revocable; per-device-friendly)
+// -------------------------------------------------------------------------
+
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

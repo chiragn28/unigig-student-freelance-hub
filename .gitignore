@@ -7,18 +7,44 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+**/node_modules
+
+# Build output
 dist
 dist-ssr
 .output
 .vinxi
 .tanstack/**
 .nitro
+**/dist
+**/build
+
+# Server build/runtime artifacts
+server/dist
+server/uploads/*
+!server/uploads/.gitkeep
+server/dev-emails/*
+!server/dev-emails/.gitkeep
+
+# Prisma
+server/prisma/migrations/dev.db*
+
+# Env files
 *.local
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.development
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+client/.wrangler/
+
+# Docker volume mount (postgres data is persisted via named volume)
 
 # Editor directories and files
 .vscode/*

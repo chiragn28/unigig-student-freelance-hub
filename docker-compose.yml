@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: unigig-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: unigig
+      POSTGRES_PASSWORD: unigig
+      POSTGRES_DB: unigig
+    ports:
+      - "5432:5432"
+    volumes:
+      - unigig-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unigig -d unigig"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  unigig-pgdata:
