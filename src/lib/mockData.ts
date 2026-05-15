@@ -236,6 +236,78 @@ export const testimonials = [
   },
 ];
 
+export const conversations = [
+  {
+    id: "c1",
+    name: "Ethan Kim",
+    avatar: avatar("Ethan"),
+    university: "Cornell",
+    lastMessage: "Sounds great — can you start Monday?",
+    time: "2m",
+    unread: 2,
+    online: true,
+    messages: [
+      { from: "them", text: "Hey! Loved your portfolio.", time: "10:14 AM" },
+      { from: "them", text: "Are you available for the landing page gig?", time: "10:14 AM" },
+      { from: "me", text: "Hi Ethan! Yes, I'd love to work on it.", time: "10:22 AM" },
+      { from: "them", text: "Sounds great — can you start Monday?", time: "10:24 AM" },
+    ],
+  },
+  {
+    id: "c2",
+    name: "Zoe Martinez",
+    avatar: avatar("Zoe"),
+    university: "UCLA",
+    lastMessage: "Sent over the brand guidelines doc 📄",
+    time: "1h",
+    unread: 0,
+    online: false,
+    messages: [
+      { from: "them", text: "Sent over the brand guidelines doc 📄", time: "Yesterday" },
+    ],
+  },
+  {
+    id: "c3",
+    name: "Noah Williams",
+    avatar: avatar("Noah"),
+    university: "UT Austin",
+    lastMessage: "Thanks for the session today!",
+    time: "Yesterday",
+    unread: 0,
+    online: true,
+    messages: [
+      { from: "them", text: "Thanks for the session today!", time: "Yesterday" },
+      { from: "me", text: "Anytime — see you Thursday.", time: "Yesterday" },
+    ],
+  },
+  {
+    id: "c4",
+    name: "Riley Brown",
+    avatar: avatar("Riley"),
+    university: "Penn State",
+    lastMessage: "Quick question about the edit",
+    time: "2d",
+    unread: 1,
+    online: false,
+    messages: [
+      { from: "them", text: "Quick question about the edit", time: "Mon" },
+    ],
+  },
+];
+
+export const notifications = [
+  { id: "n1", text: "Ethan accepted your proposal for 'Build a landing page'", time: "10m ago", unread: true },
+  { id: "n2", text: "You earned $150 from Zoe Martinez", time: "2h ago", unread: true },
+  { id: "n3", text: "Your profile was viewed 12 times this week", time: "1d ago", unread: false },
+];
+
+export const dashboardStats = [
+  { label: "Active gigs", value: "3", trend: "+1 this week" },
+  { label: "Earnings (mo.)", value: "$1,240", trend: "+18%" },
+  { label: "Profile views", value: "248", trend: "+34" },
+  { label: "Response rate", value: "98%", trend: "Keep it up" },
+];
+
 export const currentUser = {
   name: "Alex Rivera",
   avatar: avatar("Alex"),
