@@ -38,13 +38,15 @@ This repository is a **monorepo** containing a TanStack Start (React + SSR) fron
 ```
 unigig/
 ├── package.json                  # workspace root (orchestration scripts)
-├── docker-compose.yml            # local Postgres
+├── docker-compose.yml            # postgres + server + client (dev stack)
+├── .dockerignore                 # build-context exclusions
 ├── README.md                     # ← you are here
 ├── DEPLOYMENT.md                 # production deployment guide
 ├── .gitignore
 ├── .prettierrc, .prettierignore
 │
 ├── client/                       # TanStack Start + Vite frontend
+│   ├── Dockerfile.dev            # full-Docker dev runtime (vite dev)
 │   ├── package.json
 │   ├── vite.config.ts            # Lovable.dev wrapper (don't add plugins manually)
 │   ├── wrangler.jsonc            # Cloudflare Workers config (frontend SSR host option)
@@ -88,6 +90,8 @@ unigig/
 │           ├── error-capture.ts, error-page.ts
 │
 └── server/                       # Express + Prisma backend
+    ├── Dockerfile.dev            # full-Docker dev runtime (tsx watch)
+    ├── Dockerfile                # production multi-stage image
     ├── package.json
     ├── tsconfig.json
     ├── .env.example              # full env reference
@@ -148,16 +152,51 @@ That gets you:
 
 ## Running locally
 
+You have two ways to run the project. Both share the same `docker-compose.yml` and work side-by-side.
+
+### Option A — Native + Docker Postgres (default, fastest HMR)
+
 ```bash
 npm run dev
 ```
 
-This single command:
-1. Brings Postgres up (no-op if already running) and waits for it to be healthy
+This command:
+1. Brings Postgres up via Docker (no-op if already running) and waits for it to be healthy
 2. Runs pending migrations + regenerates the Prisma client
-3. Starts the **API** at http://localhost:4000 and the **client** at http://localhost:3000 in parallel (`concurrently`)
+3. Starts the **API** at http://localhost:4000 and the **client** at http://localhost:3000 (or :8080 — Vite picks per environment) in parallel (`concurrently`)
 
 You'll see colored logs labeled `server` (blue) and `client` (magenta). Hit Ctrl-C once to stop both.
+
+### Option B — Full Docker (everything containerized)
+
+```bash
+npm run docker:dev
+```
+
+Builds the `server` and `client` images (first run only) and starts all three containers (`postgres`, `server`, `client`). Source dirs are volume-mounted, so HMR still works.
+
+Then open:
+- **Client:** http://localhost:5173
+- **API:** http://localhost:4000/api/health
+
+To seed the DB inside the running server container:
+```bash
+npm run docker:seed
+```
+
+Docker commands wired up as npm scripts:
+| Command | What |
+|---|---|
+| `npm run docker:dev` | Build + start everything, attached (logs in terminal) |
+| `npm run docker:dev:detached` | Same, in background |
+| `npm run docker:down` | Stop all containers |
+| `npm run docker:logs` | Tail all container logs |
+| `npm run docker:rebuild` | Force-rebuild images (after `package.json` or Dockerfile changes) |
+| `npm run docker:seed` | Run the seed script inside the server container |
+
+**When to use which:**
+- Option A is faster for day-to-day development (Vite HMR is snappier, debugging is easier with native Node).
+- Option B is closer to a production-like environment and requires no Node installed locally — useful for onboarding.
 
 ### Try it out
 - Log in at http://localhost:3000/login with `alex@bu.edu` / `password123` (or any seeded address)

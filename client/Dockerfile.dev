@@ -1,0 +1,28 @@
+# =========================================================================
+# Client dev image — Node 20 + Vite dev (TanStack Start SSR)
+# Source is volume-mounted at runtime so HMR works.
+# =========================================================================
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy workspace manifests for layer caching
+COPY package.json package-lock.json ./
+COPY server/package.json ./server/
+COPY client/package.json ./client/
+
+# Install all workspace deps
+RUN npm install --ignore-scripts
+
+# Copy the client workspace (vite.config.ts, tsconfig.json, components.json,
+# routes, components, etc.). Volume mounts at runtime overlay ./client/src
+# and ./client/public for hot reload.
+COPY client ./client
+
+WORKDIR /app/client
+
+# Vite needs --host 0.0.0.0 to be reachable from outside the container.
+# Force port 5173 so the host port-mapping is predictable.
+EXPOSE 5173
+
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port 5173"]

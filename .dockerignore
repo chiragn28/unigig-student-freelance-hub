@@ -1,0 +1,43 @@
+# Shrinks Docker build context — speeds up image builds significantly.
+
+# Dependencies (installed fresh inside the image)
+node_modules
+**/node_modules
+
+# Build outputs
+**/dist
+**/build
+**/.tanstack
+**/.vinxi
+**/.output
+**/.wrangler
+
+# Local runtime data (mounted as volumes at dev runtime)
+server/uploads/*
+!server/uploads/.gitkeep
+server/dev-emails/*
+!server/dev-emails/.gitkeep
+
+# Env files (passed in at runtime via docker-compose `environment:` or `--env-file`)
+.env
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Git + editor
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Docs / CI (not needed inside the image)
+README.md
+DEPLOYMENT.md
+.github
+
+# Lovable / Wrangler artifacts not needed at runtime
+.lovable
+**/.lovable
+client/wrangler.jsonc

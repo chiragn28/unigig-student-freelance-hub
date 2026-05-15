@@ -212,6 +212,33 @@ Stripe Connect docs: https://stripe.com/docs/connect/express-accounts.
 
 ---
 
+## Production Docker image (server)
+
+A production-grade multi-stage Dockerfile exists at `server/Dockerfile`. Build and run:
+
+```bash
+# from repo root
+docker build -f server/Dockerfile -t unigig-server:latest .
+
+docker run --rm -p 4000:4000 \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
+  -e JWT_ACCESS_SECRET="$(openssl rand -hex 64)" \
+  -e JWT_REFRESH_SECRET="$(openssl rand -hex 64)" \
+  -e CORS_ORIGINS="https://unigig.app" \
+  -e APP_URL="https://unigig.app" \
+  -e NODE_ENV=production \
+  unigig-server:latest
+```
+
+The image:
+- Multi-stage (deps → build → minimal runtime)
+- Runs `prisma migrate deploy` on startup (idempotent)
+- Includes only production dependencies in the final layer
+
+Use this when self-hosting (Fly.io, your own VM, Render's Docker target). Railway can also consume this Dockerfile, but its Node detection works equally well without it.
+
+**No production Dockerfile for the client yet.** The client targets Cloudflare Workers (via `@cloudflare/vite-plugin`), so production hosting is Vercel/Cloudflare/etc. — not a Node container. To self-host the frontend in a Node container, swap the Cloudflare adapter for a Node SSR adapter and add a parallel client Dockerfile.
+
 ## Quick deploy: Vercel + Railway path (no custom domain yet)
 
 1. **Push to GitHub.**

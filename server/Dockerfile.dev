@@ -1,0 +1,36 @@
+# =========================================================================
+# Server dev image — Node 20 + Prisma + tsx watch
+# Source is volume-mounted at runtime so edits hot-reload.
+# =========================================================================
+FROM node:20-alpine
+
+# Native build deps for bcrypt + openssl for Prisma engines
+RUN apk add --no-cache python3 make g++ openssl libc6-compat
+
+WORKDIR /app
+
+# Copy workspace manifests for layer caching
+COPY package.json package-lock.json ./
+COPY server/package.json ./server/
+COPY client/package.json ./client/
+
+# Install all workspace deps (hoisted to /app/node_modules).
+# --ignore-scripts skips the server's postinstall (prisma generate) which
+# we run at container start, once the schema is volume-mounted.
+# BUT bcrypt's native binary is also a postinstall — rebuild it explicitly.
+RUN npm install --ignore-scripts && npm rebuild bcrypt --build-from-source
+
+# Copy the server workspace (tsconfig.json, source, prisma schema).
+# Volume mounts at runtime overlay ./server/src etc. for hot reload.
+COPY server ./server
+
+WORKDIR /app/server
+
+EXPOSE 4000
+
+# At runtime:
+#   1. Generate the Prisma client (uses the mounted schema)
+#   2. Apply pending migrations
+#   3. Start tsx watch
+# If postgres isn't healthy yet, depends_on in compose handles that.
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npx tsx watch src/index.ts"]

@@ -1,3 +1,17 @@
+# =========================================================================
+# unigig — full dev stack via Docker
+#
+# Two ways to use this file:
+#
+#   1. Hybrid (apps native, DB in Docker):
+#      `npm run db:up`  →  `docker compose up -d --wait postgres`
+#      Then run apps natively with `npm run dev`.
+#
+#   2. Full Docker (apps + DB in Docker):
+#      `npm run docker:dev`  →  `docker compose up --build`
+#      Hit http://localhost:8080 for the client, http://localhost:4000 for the API.
+# =========================================================================
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -16,6 +30,62 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile.dev
+    container_name: unigig-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      # Inside the compose network, Postgres is reachable by service name
+      DATABASE_URL: postgresql://unigig:unigig@postgres:5432/unigig?schema=public
+      JWT_ACCESS_SECRET: dev-access-secret-change-me-in-prod
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-me-in-prod
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 30d
+      CORS_ORIGINS: http://localhost:8080,http://localhost:3000,http://localhost:5173
+      EMAIL_VERIFICATION_REQUIRED: "true"
+      EMAIL_FROM: noreply@unigig.local
+      EMAIL_PROVIDER: console
+      APP_URL: http://localhost:8080
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: uploads
+      STORAGE_PUBLIC_URL: http://localhost:4000/uploads
+      GOOGLE_AUTH_ENABLED: "false"
+      RATE_LIMIT_WINDOW_MS: "900000"
+      RATE_LIMIT_MAX: "300"
+      AUTH_RATE_LIMIT_MAX: "20"
+    volumes:
+      # Hot-reload: mount source dirs (not whole workspace — avoids node_modules masking)
+      - ./server/src:/app/server/src
+      - ./server/prisma:/app/server/prisma
+      - ./server/uploads:/app/server/uploads
+      - ./server/dev-emails:/app/server/dev-emails
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile.dev
+    container_name: unigig-client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      # Browser-reachable URL (the browser runs on the host, not in the container)
+      VITE_API_URL: http://localhost:4000/api
+    volumes:
+      - ./client/src:/app/client/src
+      - ./client/public:/app/client/public
+    depends_on:
+      - server
 
 volumes:
   unigig-pgdata:
